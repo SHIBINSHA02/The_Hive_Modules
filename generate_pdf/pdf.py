@@ -1,3 +1,4 @@
+# generate_pdf/pdf.py
 from fpdf import FPDF
 from datetime import datetime
 import os
