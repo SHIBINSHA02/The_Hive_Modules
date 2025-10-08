@@ -4,8 +4,59 @@ from datetime import datetime
 from llm_handler import formalize_contract_text
 from pdf import create_agreement_pdf
 
+# Set page configuration with custom icon
 st.set_page_config(page_title="Construction Agreement Generator", page_icon="🏗️", layout="centered")
-st.title("🏗️ Construction Agreement Generator")
+
+# Apply custom CSS for #2c6df5 and white theme
+st.markdown("""
+    <style>
+    /* Main button styling */
+    div.stButton > button {
+        background-color: #2c6df5;
+        color: #ffffff;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+    }
+    div.stButton > button:hover {
+        background-color: #1a5cd4;
+        color: #ffffff;
+    }
+    /* Download button specific styling */
+    div.stDownloadButton > button {
+        background-color: #2c6df5;
+        color: #ffffff;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+    }
+    div.stDownloadButton > button:hover {
+        background-color: #1a5cd4;
+        color: #ffffff;
+    }
+    /* Text input and textarea borders */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea {
+        border-color: #2c6df5;
+    }
+    /* Info and success message styling */
+    .stAlert {
+        background-color: #2c6df5;
+        color: #ffffff;
+    }
+    /* Divider styling */
+    hr {
+        border-color: #2c6df5;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Display logo at the top
+st.image("logo.png", width=200, caption="Company Logo")
+
+st.title("Construction Agreement Generator")
 
 # --- Initialize session state ---
 default_keys = [
@@ -24,7 +75,7 @@ if "pending_update" in st.session_state and st.session_state.pending_update:
     st.session_state.pending_update = False
 
 # --- Contractor & Client Info ---
-st.subheader("🧑‍💼 Party Information")
+st.subheader("Party Information")
 
 st.session_state.contractor_name = st.text_input("Contractor Name", value=st.session_state.contractor_name)
 st.session_state.contractor_address = st.text_area("Contractor Address", value=st.session_state.contractor_address)
@@ -35,7 +86,7 @@ agreement_date = st.date_input("Agreement Date", datetime.now())
 st.divider()
 
 # --- Company Logo Upload ---
-st.subheader("🏢 Company Branding")
+st.subheader("Company Branding")
 uploaded_logo = st.file_uploader("Upload Company Logo (optional, PNG/JPG)", type=["png", "jpg", "jpeg"])
 if uploaded_logo:
     st.image(uploaded_logo, width=200, caption="Company Logo Preview")
@@ -43,7 +94,7 @@ if uploaded_logo:
 st.divider()
 
 # --- Contract Content Sections ---
-st.subheader("📄 Agreement Details")
+st.subheader("Agreement Details")
 
 st.text_area("Scope of Work", key="scope_of_work", height=150)
 st.text_area("Project Timeline", key="project_timeline", height=150)
@@ -83,7 +134,7 @@ if st.button("📄 Generate Agreement PDF", use_container_width=True):
             st.session_state.payment_details,
             "Authorized Signatory", "Manager",
             "Authorized Signatory", "Client Representative",
-            logo_bytes=logo_bytes  # <-- New argument
+            logo_bytes=logo_bytes
         )
 
         st.download_button(
