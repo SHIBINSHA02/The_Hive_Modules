@@ -90,17 +90,7 @@ def create_agreement_pdf(contractor_name, contractor_address, client_name, clien
     pdf.multi_cell(0, 6, txt=payment_details)
     pdf.ln(10)
 
-    # --- Final Signature Block on Last Page (optional redundancy) ---
-    pdf.ln(20)
-    pdf.cell(95, 10, txt=contractor_name, ln=False)
-    pdf.cell(95, 10, txt=client_name, ln=True, align='R')
-    pdf.cell(95, 10, txt="By: ____________________", ln=False)
-    pdf.cell(95, 10, txt="By: ____________________", ln=True, align='R')
-    pdf.ln(5)
-    pdf.cell(95, 5, txt=f"Name: {contractor_signer_name}", ln=False)
-    pdf.cell(95, 5, txt=f"Name: {client_signer_name}", ln=True, align='R')
-    pdf.cell(95, 5, txt=f"Title: {contractor_signer_title}", ln=False)
-    pdf.cell(95, 5, txt=f"Title: {client_signer_title}", ln=True, align='R')
+   
 
     # Return as bytes
     return bytes(pdf.output(dest='S'))

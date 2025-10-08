@@ -1,58 +1,96 @@
 # generate_pdf/main.py
 import streamlit as st
 from datetime import datetime
-from pdf import create_agreement_pdf  # 👈 import your generator function
+from llm_handler import formalize_contract_text
+from pdf import create_agreement_pdf
 
-# --- Streamlit App Configuration ---
-st.set_page_config(page_title="Construction Agreement Generator", layout="centered")
+st.set_page_config(page_title="Construction Agreement Generator", page_icon="🏗️", layout="centered")
+st.title("🏗️ Construction Agreement Generator")
 
-st.title("🏗️ Construction Agreement PDF Generator")
-st.write("Fill in the details below to automatically generate a legally formatted Construction Agreement PDF.")
+# --- Initialize session state ---
+default_keys = [
+    "scope_of_work", "project_timeline", "payment_details",
+    "contractor_name", "contractor_address", "client_name", "client_address"
+]
+for key in default_keys:
+    if key not in st.session_state:
+        st.session_state[key] = ""
 
-# --- Input Form ---
-with st.form("agreement_form"):
-    agreement_date = st.date_input("Agreement Date", datetime.now())
+# --- Apply formatted content before widgets load (safe update step) ---
+if "pending_update" in st.session_state and st.session_state.pending_update:
+    st.session_state.scope_of_work = st.session_state.formatted_scope_of_work
+    st.session_state.project_timeline = st.session_state.formatted_project_timeline
+    st.session_state.payment_details = st.session_state.formatted_payment_details
+    st.session_state.pending_update = False
 
-    st.subheader("Contractor Details")
-    contractor_name = st.text_input("Contractor Name", "ABC Builders Pvt. Ltd.")
-    contractor_address = st.text_area("Contractor Address", "123 Main Street, Mumbai, Maharashtra")
-    contractor_signer_name = st.text_input("Contractor Signatory Name", "John Doe")
-    contractor_signer_title = st.text_input("Contractor Signatory Title", "Managing Director")
+# --- Contractor & Client Info ---
+st.subheader("🧑‍💼 Party Information")
 
-    st.subheader("Client Details")
-    client_name = st.text_input("Client Name", "XYZ Developers Pvt. Ltd.")
-    client_address = st.text_area("Client Address", "456 Oak Avenue, Bangalore, Karnataka")
-    client_signer_name = st.text_input("Client Signatory Name", "Jane Smith")
-    client_signer_title = st.text_input("Client Signatory Title", "CEO")
+st.session_state.contractor_name = st.text_input(
+    "Contractor Name", value=st.session_state.contractor_name
+)
+st.session_state.contractor_address = st.text_area(
+    "Contractor Address", value=st.session_state.contractor_address
+)
+st.session_state.client_name = st.text_input(
+    "Client Name", value=st.session_state.client_name
+)
+st.session_state.client_address = st.text_area(
+    "Client Address", value=st.session_state.client_address
+)
+agreement_date = st.date_input("Agreement Date", datetime.now())
 
-    st.subheader("Project Details")
-    scope_of_work = st.text_area("Scope of Work (Exhibit A)", 
-        "Provide construction services, including site preparation, building construction, plumbing, electrical work, and finishing.")
-    project_timeline = st.text_area("Project Timeline (Exhibit B)", 
-        "The project shall commence on [Start Date] and is expected to be completed by [End Date]. Milestones will be detailed separately.")
-    payment_details = st.text_area("Payment Details (Exhibit C)", 
-        "The Client shall pay the Contractor INR 10,00,000 in installments as per the agreed payment schedule.")
+st.divider()
 
-    submitted = st.form_submit_button("Generate Agreement PDF")
+# --- Contract Content Sections ---
+st.subheader("📄 Agreement Details")
 
-# --- Generate PDF ---
-if submitted:
-    with st.spinner("Generating PDF... Please wait."):
+st.text_area("Scope of Work", key="scope_of_work", height=150)
+st.text_area("Project Timeline", key="project_timeline", height=150)
+st.text_area("Payment Details", key="payment_details", height=150)
+
+st.divider()
+
+# --- LLM Formatter Button ---
+if st.button("✨ Format Text (LLM)", use_container_width=True):
+    with st.spinner("Formalizing content using Mistral LLM..."):
+        formatted = formalize_contract_text(
+            st.session_state.scope_of_work,
+            st.session_state.project_timeline,
+            st.session_state.payment_details
+        )
+
+        # Store formatted results separately
+        st.session_state.formatted_scope_of_work = formatted["scope_of_work"]
+        st.session_state.formatted_project_timeline = formatted["project_timeline"]
+        st.session_state.formatted_payment_details = formatted["payment_details"]
+        st.session_state.pending_update = True  # Flag to apply on next render
+
+        st.success("✅ Text formatted successfully! Updating fields...")
+        st.rerun()  # Safe re-render so widgets show updated values
+
+# --- Generate PDF Button ---
+if st.button("📄 Generate Agreement PDF", use_container_width=True):
+    with st.spinner("Generating agreement PDF..."):
         pdf_bytes = create_agreement_pdf(
-            contractor_name, contractor_address,
-            client_name, client_address,
+            st.session_state.contractor_name,
+            st.session_state.contractor_address,
+            st.session_state.client_name,
+            st.session_state.client_address,
             agreement_date,
-            scope_of_work, project_timeline, payment_details,
-            contractor_signer_name, contractor_signer_title,
-            client_signer_name, client_signer_title
+            st.session_state.scope_of_work,
+            st.session_state.project_timeline,
+            st.session_state.payment_details,
+            "Authorized Signatory", "Manager",
+            "Authorized Signatory", "Client Representative"
         )
 
-        st.success("✅ PDF generated successfully!")
-
-        # Download button
         st.download_button(
-            label="📄 Download Agreement PDF",
+            label="⬇️ Download Agreement PDF",
             data=pdf_bytes,
-            file_name=f"Construction_Agreement_{agreement_date.strftime('%Y-%m-%d')}.pdf",
-            mime="application/pdf"
+            file_name=f"{st.session_state.contractor_name}_agreement.pdf",
+            mime="application/pdf",
+            use_container_width=True
         )
+
+st.info("💡 Tip: You can edit the text fields before or after formatting, then regenerate the PDF anytime.")
