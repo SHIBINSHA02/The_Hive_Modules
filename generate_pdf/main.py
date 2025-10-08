@@ -26,19 +26,19 @@ if "pending_update" in st.session_state and st.session_state.pending_update:
 # --- Contractor & Client Info ---
 st.subheader("🧑‍💼 Party Information")
 
-st.session_state.contractor_name = st.text_input(
-    "Contractor Name", value=st.session_state.contractor_name
-)
-st.session_state.contractor_address = st.text_area(
-    "Contractor Address", value=st.session_state.contractor_address
-)
-st.session_state.client_name = st.text_input(
-    "Client Name", value=st.session_state.client_name
-)
-st.session_state.client_address = st.text_area(
-    "Client Address", value=st.session_state.client_address
-)
+st.session_state.contractor_name = st.text_input("Contractor Name", value=st.session_state.contractor_name)
+st.session_state.contractor_address = st.text_area("Contractor Address", value=st.session_state.contractor_address)
+st.session_state.client_name = st.text_input("Client Name", value=st.session_state.client_name)
+st.session_state.client_address = st.text_area("Client Address", value=st.session_state.client_address)
 agreement_date = st.date_input("Agreement Date", datetime.now())
+
+st.divider()
+
+# --- Company Logo Upload ---
+st.subheader("🏢 Company Branding")
+uploaded_logo = st.file_uploader("Upload Company Logo (optional, PNG/JPG)", type=["png", "jpg", "jpeg"])
+if uploaded_logo:
+    st.image(uploaded_logo, width=200, caption="Company Logo Preview")
 
 st.divider()
 
@@ -60,18 +60,18 @@ if st.button("✨ Format Text (LLM)", use_container_width=True):
             st.session_state.payment_details
         )
 
-        # Store formatted results separately
         st.session_state.formatted_scope_of_work = formatted["scope_of_work"]
         st.session_state.formatted_project_timeline = formatted["project_timeline"]
         st.session_state.formatted_payment_details = formatted["payment_details"]
-        st.session_state.pending_update = True  # Flag to apply on next render
-
+        st.session_state.pending_update = True
         st.success("✅ Text formatted successfully! Updating fields...")
-        st.rerun()  # Safe re-render so widgets show updated values
+        st.rerun()
 
 # --- Generate PDF Button ---
 if st.button("📄 Generate Agreement PDF", use_container_width=True):
     with st.spinner("Generating agreement PDF..."):
+        logo_bytes = uploaded_logo.read() if uploaded_logo else None
+
         pdf_bytes = create_agreement_pdf(
             st.session_state.contractor_name,
             st.session_state.contractor_address,
@@ -82,7 +82,8 @@ if st.button("📄 Generate Agreement PDF", use_container_width=True):
             st.session_state.project_timeline,
             st.session_state.payment_details,
             "Authorized Signatory", "Manager",
-            "Authorized Signatory", "Client Representative"
+            "Authorized Signatory", "Client Representative",
+            logo_bytes=logo_bytes  # <-- New argument
         )
 
         st.download_button(
@@ -93,4 +94,4 @@ if st.button("📄 Generate Agreement PDF", use_container_width=True):
             use_container_width=True
         )
 
-st.info("💡 Tip: You can edit the text fields before or after formatting, then regenerate the PDF anytime.")
+st.info("💡 Tip: You can upload a logo, format text using LLM, and regenerate the PDF anytime.")
